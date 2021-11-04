@@ -250,7 +250,7 @@ class style_net(nn.Module):
         super(style_net, self).__init__()
 #         self.hor_filter=hor_filter
         self.layers = nn.Sequential(c.OrderedDict([
-                            ('conv1',nn.Conv2d(IN_CHANNELS,N_FILTERS,kernel_size=(1,hor_filter), padding='same', padding_mode='circular',bias=False)),
+                            ('conv1',nn.Conv2d(IN_CHANNELS,N_FILTERS,kernel_size=(1,hor_filter), padding='valid', padding_mode='circular',bias=False)),
                             ('relu1',nn.ReLU())#,
 #                             ('max1', nn.MaxPool2d(kernel_size=(1,2))),  # if stacking more conv layers...
             
