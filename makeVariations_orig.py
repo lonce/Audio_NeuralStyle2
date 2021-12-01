@@ -15,7 +15,7 @@ import torch.optim as optim
 import numpy as np
 
 import librosa
-#from IPython.display import Audio, display
+from IPython.display import Audio, display
 from PIL import Image
 
 import scipy.stats as stats
@@ -63,7 +63,6 @@ if __name__ == "__main__":
     requiredNamed.add_argument('-s', '--steps', help="Steps for style transer", required=True,
                         type=int, dest="steps")
 
-    parser.add_argument('-k', '--kernels', nargs='+',help="Array of integer kernel sizes",required=False, type=int, dest="possible_kernels", default=[2,4,8,16,64,128])
     parser.add_argument('-m', '--mdir', help="Path to model's folder", required=False,
                         type=str, dest="mdir", default="None")
     parser.add_argument('-n', '--numVariations', help='Number of variations for each input sound (default 1)', required=False,
@@ -115,7 +114,7 @@ N_FILTERS = 512# 4096 #no. of filters in 1st conv layer
 
 #MS Number of separate CNNs operating on input
 
-possible_kernels = args.possible_kernels #[2,2,4,4,8,8,16,16] #32,64,128,256,512,1024,2048]
+possible_kernels = [2,2,4,4,8,8,16,16] #32,64,128,256,512,1024,2048]
 numStreams=len(possible_kernels)
 
 # possible_kernels = [2,4,8,16,32,64,128,256,512,1024,2048]
@@ -135,36 +134,30 @@ def inv_log(img):
     return img
 
 #############################################################################################
-if tifresi:
-    from tifresi.hparams import HParams
-    from tifresi.stft import GaussTruncTF
+from tifresi.hparams import HParams
+from tifresi.stft import GaussTruncTF
 
 # from tifresi.transforms import log_spectrogram
 # from tifresi.transforms import inv_log_spectrogram
 #NOTE: Not using Marifioties 10 log_10 transform. Instead use natural log.
 # This makes a HUGE difference !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-    log_spectrogram=log_scale
-    inv_log_spectrogram=inv_log
+log_spectrogram=log_scale
+inv_log_spectrogram=inv_log
 
 # not sure HParams are being set properly here
-
-    HParams.stft_channels = N_FFT 
-    stft_channels = HParams.stft_channels 
-    HParams.hop_size  = K_HOP
-    hop_size =  HParams.hop_size
-    print(f'if tifresi: {hop_size=}')
-    HParams.sr=16000 
+HParams.stft_channels = N_FFT 
+stft_channels = HParams.stft_channels 
+HParams.hop_size  = K_HOP
+hop_size =  HParams.hop_size
+print(f'if tifresi: {hop_size=}')
+HParams.sr=16000 
 
 # empirically set: - too small, get low-res ringing; too high, get distortion
-    tfresiMagSpectScale=1 # Takes the [0,1] mag spectrogram and maps it to [0, tfresiMagSpectScale]
+tfresiMagSpectScale=1 # Takes the [0,1] mag spectrogram and maps it to [0, tfresiMagSpectScale]
 
 # For faster processin, a truncated window can be used instead
-    stft_system = GaussTruncTF(hop_size=hop_size, stft_channels=stft_channels)
-else:
-    log_spectrogram=log_scale
-    inv_log_spectrogram=inv_log
-    stft_channels = N_FFT
-    hop_size=K_HOP
+stft_system = GaussTruncTF(hop_size=hop_size, stft_channels=stft_channels)
+
 ############################################################################################
 
 use_cuda = torch.cuda.is_available() #use GPU if available
@@ -257,7 +250,7 @@ class style_net(nn.Module):
         super(style_net, self).__init__()
 #         self.hor_filter=hor_filter
         self.layers = nn.Sequential(c.OrderedDict([
-                            ('conv1',nn.Conv2d(IN_CHANNELS,N_FILTERS,kernel_size=(1,hor_filter), padding=0,padding_mode='circular',bias=False)),
+                            ('conv1',nn.Conv2d(IN_CHANNELS,N_FILTERS,kernel_size=(1,hor_filter), padding='valid', padding_mode='circular',bias=False)),
                             ('relu1',nn.ReLU())#,
 #                             ('max1', nn.MaxPool2d(kernel_size=(1,2))),  # if stacking more conv layers...
             
